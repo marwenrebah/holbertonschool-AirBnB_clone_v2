@@ -10,19 +10,25 @@ class FileStorage:
     __objects = {}
 
     def all(self, cls=None):
-        """returns the list of objects of one type of class or more"""
-        if not cls:
+        """Returns a dictionary of models currently in storage"""
+        if cls is None:
             return FileStorage.__objects
-        else:
-            obj = {}
-            for key, value in FileStorage.__objects.items():
-                if isinstance(value, cls):
-                    obj[key] = value
-            return obj
+        objs = {}
+        for key, value in FileStorage.__objects.items():
+            if isinstance(value, cls):
+                objs[key] = value
+        return objs
+
+    def delete(self, obj=None):
+        """Deletes an object from the storage"""
+        if not obj:
+            return
+        key = "{}.{}".format(type(obj).__name__, obj.id)
+        del FileStorage.__objects[key]
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
-        self.__objects["{}.{}".format(type(obj).__name__, obj.id)] = obj
+        self.all().update({obj.to_dict()["__class__"] + "." + obj.id: obj})
 
     def save(self):
         """Saves storage dictionary to file"""
@@ -61,17 +67,5 @@ class FileStorage:
         except FileNotFoundError:
             pass
 
-    def delete(self, obj=None):
-        """Deletes an object by its id or all objects"""
-        if obj is None:
-            pass
-        else:
-            if type(obj).__name__ + "." + str(obj.id) in self.all():
-                del self.all()[type(obj).__name__ + "." + str(obj.id)]
-                self.save()
-
     def close(self):
-        """
-        Closes the current session
-        """
         self.reload()
